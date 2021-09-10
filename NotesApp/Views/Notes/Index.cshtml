@@ -1,0 +1,130 @@
+﻿@model List<NotesApp.Models.Note>
+
+@{
+    ViewData["Title"] = "My Notes";
+}
+
+@section Styles
+{
+    <style type="text/css">
+        body {
+            background: #f5f5f5;
+        }
+
+        #notes, #notes li {
+            list-style: none;
+        }
+
+        #notes {
+            padding: 0;
+            display: grid;
+            grid-template-columns: auto auto auto;
+            grid-column-gap: 3em;
+            grid-row-gap: 3em;
+        }
+
+            #notes li #content {
+                background: #fff;
+                display: block;
+                height: 20em;
+                width: 20em;
+                padding: 1em;
+                box-shadow: 5px 5px 7px rgba(33,33,33,.1);
+                transition: transform .15s linear;
+            }
+
+        #content {
+            border-radius: 5px;
+        }
+
+        #actions {
+            display: none;
+        }
+
+        #notes li:hover #actions, #notes li:focus #actions {
+            display: block;
+        }
+
+        #content #body {
+            font-size: 1em;
+            height: 9em;
+            overflow: hidden;
+            position: relative;
+        }
+
+            #content #body::after {
+                content: "";
+                text-align: right;
+                position: absolute;
+                bottom: 0;
+                right: 0;
+                width: 70%;
+                height: 1.2em;
+                background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%);
+            }
+
+        #link {
+            text-decoration: none;
+            color: black;
+        }
+
+        #search {
+            border: 1px solid gray;
+        }
+
+        #cancel {
+            border-top: 1px solid gray;
+            border-bottom: 1px solid gray;
+            border-radius: 0;
+        }
+
+    </style>
+}
+
+<div class="row">
+    <div class="col-12">
+        <form asp-action="Index" method="get">
+            <div class="form-actions no-color">
+                <div class="input-group">
+                    <input id="search" type="text" name="SearchString" value="@ViewData["CurrentFilter"]" placeholder="Search notes" class="form-control" />
+                    <div class="input-group-append">
+                        <a asp-action="Index" id="cancel" class="btn bg-white">
+                            <i class="fas fa-times text-secondary"></i>
+                        </a>
+                    </div>
+                    <div class="input-group-append">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row my-4">
+    <div class="col-12 text-center">
+        <a asp-action="Create"><h5><i class="fas fa-plus"></i> New Note</h5></a>
+    </div>
+</div>
+
+<ul id="notes">
+    @for (int i = 0; i < Model.Count; i++)
+    {
+        var item = Model[i];
+    <li>
+        <a asp-action="Details" asp-route-id="@item.Id" id="link">
+            <div id="content">
+                <p class="text-muted">@item.Date</p>
+                <h4>@item.Title</h4>
+                <p id="body">@item.Body</p>
+                <div id="actions" class="text-center my-2">
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-info" style="width: 6rem">Edit</a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger" style="width: 6rem">Delete</a>
+                </div>
+            </div>
+        </a>
+    </li>
+    }
+</ul>
