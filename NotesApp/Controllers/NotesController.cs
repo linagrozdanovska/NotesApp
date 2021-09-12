@@ -28,7 +28,6 @@ namespace NotesApp.Controllers
         // GET: Notes
         public IActionResult Index(string searchString)
         {
-            ViewData["CurrentFilter"] = searchString;
             string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var notes = _noteRepository.GetAll(userId).ToList();
             if (!String.IsNullOrEmpty(searchString))
@@ -177,7 +176,7 @@ namespace NotesApp.Controllers
             }
             else
             {
-                return View();
+                return View("Home");
             }
         }
 
