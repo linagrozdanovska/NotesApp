@@ -54,7 +54,7 @@ namespace NotesApp.Controllers
                 return NotFound();
             }
 
-            return View(note);
+            return View("Details", note);
         }
 
         // GET: Notes/Create
@@ -78,7 +78,7 @@ namespace NotesApp.Controllers
                 _noteRepository.Insert(note);
                 return RedirectToAction(nameof(Index));
             }
-            return View(note);
+            return View("Create", note);
         }
 
         // GET: Notes/Edit/5
@@ -97,7 +97,7 @@ namespace NotesApp.Controllers
             {
                 return NotFound();
             }
-            return View(note);
+            return View("Edit", note);
         }
 
         // POST: Notes/Edit/5
@@ -134,7 +134,7 @@ namespace NotesApp.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(note);
+            return View("Edit", note);
         }
 
         // GET: Notes/Delete/5
@@ -153,7 +153,7 @@ namespace NotesApp.Controllers
                 return NotFound();
             }
 
-            return View(note);
+            return View("Delete", note);
         }
 
         // POST: Notes/Delete/5
