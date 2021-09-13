@@ -516,6 +516,77 @@ namespace NotesApp.Tests
             DbUpdateConcurrencyException exception = Assert.Throws<DbUpdateConcurrencyException>(result);
         }
 
+        [Theory]
+        [InlineData(null)]
+        public void Delete_Get_NullId_ReturnsNotFound(int? id)
+        {
+            //Arrange
+            var repo = new Mock<INoteRepository>();
+            var store = new Mock<IUserStore<IdentityUser>>();
+            var manager = new Mock<UserManager<IdentityUser>>(store.Object, null, null, null, null, null, null, null, null);
+            var controller = new NotesController(repo.Object, manager.Object);
+
+            //Act
+            var result = controller.Delete(id);
+
+            //Assert
+            Assert.IsType<NotFoundResult>(result);
+        }
+
+        [Theory]
+        [InlineData(5)]
+        public void Delete_Get_NonexistentId_ReturnsNotFound(int? id)
+        {
+            //Arrange
+            var repo = new Mock<INoteRepository>();
+            var store = new Mock<IUserStore<IdentityUser>>();
+            var manager = new Mock<UserManager<IdentityUser>>(store.Object, null, null, null, null, null, null, null, null);
+            var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
+                new Claim(ClaimTypes.NameIdentifier, "test"),
+                new Claim(ClaimTypes.Name, "test@mail.com")
+            }, "TestAuthentication"));
+            repo.Setup(r => r.Get(id, user.FindFirstValue(ClaimTypes.NameIdentifier)))
+                .Returns(GetTestNotes(user.FindFirstValue(ClaimTypes.NameIdentifier)).SingleOrDefault(z => z.Id.Equals(id)));
+            var controller = new NotesController(repo.Object, manager.Object);
+            controller.ControllerContext = new ControllerContext();
+            controller.ControllerContext.HttpContext = new DefaultHttpContext { User = user };
+
+            //Act
+            var result = controller.Delete(id);
+
+            //Assert
+            Assert.IsType<NotFoundResult>(result);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        public void Delete_Get_ExistentId_ReturnsDeleteView(int? id)
+        {
+            //Arrange
+            var repo = new Mock<INoteRepository>();
+            var store = new Mock<IUserStore<IdentityUser>>();
+            var manager = new Mock<UserManager<IdentityUser>>(store.Object, null, null, null, null, null, null, null, null);
+            var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
+                new Claim(ClaimTypes.NameIdentifier, "test"),
+                new Claim(ClaimTypes.Name, "test@mail.com")
+            }, "TestAuthentication"));
+            repo.Setup(r => r.Get(id, user.FindFirstValue(ClaimTypes.NameIdentifier)))
+                .Returns(GetTestNotes(user.FindFirstValue(ClaimTypes.NameIdentifier)).SingleOrDefault(z => z.Id.Equals(id)));
+            var controller = new NotesController(repo.Object, manager.Object);
+            controller.ControllerContext = new ControllerContext();
+            controller.ControllerContext.HttpContext = new DefaultHttpContext { User = user };
+
+            //Act
+            var result = controller.Delete(id) as ViewResult;
+
+            //Assert
+            Assert.Equal("Delete", result.ViewName);
+            var note = Assert.IsType<Note>(result.Model);
+            Assert.Equal(id, note.Id);
+        }
+
+
+
         private List<Note> GetTestNotes(string userId)
         {
             List<Note> output = new List<Note>
