@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Moq;
 using NotesApp.Controllers;
 using NotesApp.Data;
@@ -312,7 +313,7 @@ namespace NotesApp.Tests
 
         [Theory]
         [InlineData(0)]
-        public void Edit_Get_ExistentId_ReturnsDetailsView(int? id)
+        public void Edit_Get_ExistentId_ReturnsEditView(int? id)
         {
             //Arrange
             var repo = new Mock<INoteRepository>();
@@ -341,7 +342,178 @@ namespace NotesApp.Tests
         [InlineData(2)]
         public void Edit_Post_DifferentIdValues_ReturnsNotFound(int id)
         {
+            //Arrange
+            var repo = new Mock<INoteRepository>();
+            var store = new Mock<IUserStore<IdentityUser>>();
+            var manager = new Mock<UserManager<IdentityUser>>(store.Object, null, null, null, null, null, null, null, null);
+            var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
+                new Claim(ClaimTypes.NameIdentifier, "test"),
+                new Claim(ClaimTypes.Name, "test@mail.com")
+            }, "TestAuthentication"));
+            Note note = new Note
+            {
+                Id = 0,
+                UserId = "test",
+                Date = DateTime.Now,
+                Title = "Title",
+                Body = "Body"
+            };
+            var controller = new NotesController(repo.Object, manager.Object);
+            controller.ControllerContext = new ControllerContext();
+            controller.ControllerContext.HttpContext = new DefaultHttpContext { User = user };
 
+            //Act
+            var result = controller.Edit(id, note);
+
+            //Assert
+            Assert.IsType<NotFoundResult>(result);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        public void Edit_Post_InvalidModelState_ReturnsEditView(int id)
+        {
+            //Arrange
+            var repo = new Mock<INoteRepository>();
+            var store = new Mock<IUserStore<IdentityUser>>();
+            var manager = new Mock<UserManager<IdentityUser>>(store.Object, null, null, null, null, null, null, null, null);
+            var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
+                new Claim(ClaimTypes.NameIdentifier, "test"),
+                new Claim(ClaimTypes.Name, "test@mail.com")
+            }, "TestAuthentication"));
+            Note n = null;
+            repo.Setup(r => r.Update(It.IsAny<Note>()))
+                .Callback<Note>(x => n = x);
+            Note note = new Note
+            {
+                Id = 0,
+                UserId = "test",
+                Date = DateTime.Now,
+                Title = "Title"
+            };
+            var controller = new NotesController(repo.Object, manager.Object);
+            controller.ControllerContext = new ControllerContext();
+            controller.ControllerContext.HttpContext = new DefaultHttpContext { User = user };
+            controller.ModelState.AddModelError("Body", "The Body field is required.");
+
+            //Act
+            var result = controller.Edit(id, note) as ViewResult;
+
+            //Assert
+            repo.Verify(x => x.Update(It.IsAny<Note>()), Times.Never);
+            Assert.Equal("Edit", result.ViewName);
+            Assert.IsType<Note>(result.Model);
+            Assert.Equal(id, note.Id);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        public void Edit_Post_ValidModelStateNoException_RedirectsToIndexAction(int id)
+        {
+            //Arrange
+            var repo = new Mock<INoteRepository>();
+            var store = new Mock<IUserStore<IdentityUser>>();
+            var manager = new Mock<UserManager<IdentityUser>>(store.Object, null, null, null, null, null, null, null, null);
+            var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
+                new Claim(ClaimTypes.NameIdentifier, "test"),
+                new Claim(ClaimTypes.Name, "test@mail.com")
+            }, "TestAuthentication"));
+            Note n = null;
+            repo.Setup(r => r.Update(It.IsAny<Note>()))
+                .Callback<Note>(x => n = x);
+            Note note = new Note
+            {
+                Id = 0,
+                UserId = "test",
+                Date = DateTime.Now,
+                Title = "Title",
+                Body = "Body"
+            };
+            var controller = new NotesController(repo.Object, manager.Object);
+            controller.ControllerContext = new ControllerContext();
+            controller.ControllerContext.HttpContext = new DefaultHttpContext { User = user };
+
+            //Act
+            RedirectToActionResult result = (RedirectToActionResult)controller.Edit(id, note);
+
+            //Assert
+            repo.Verify(x => x.Update(It.IsAny<Note>()), Times.Once);
+            Assert.Equal(n.Id, note.Id);
+            Assert.Equal(n.Title, note.Title);
+            Assert.Equal(n.Body, note.Body);
+            Assert.Equal(n.UserId, user.FindFirstValue(ClaimTypes.NameIdentifier));
+            Assert.Equal("Index", result.ActionName);
+        }
+
+        [Theory]
+        [InlineData(10)]
+        public void Edit_Post_ValidModelStateExceptionNonexistentNote_ReturnsNotFound(int id)
+        {
+            //Arrange
+            var repo = new Mock<INoteRepository>();
+            var store = new Mock<IUserStore<IdentityUser>>();
+            var manager = new Mock<UserManager<IdentityUser>>(store.Object, null, null, null, null, null, null, null, null);
+            var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
+                new Claim(ClaimTypes.NameIdentifier, "test"),
+                new Claim(ClaimTypes.Name, "test@mail.com")
+            }, "TestAuthentication"));
+            Note n = null;
+            repo.Setup(r => r.Update(It.IsAny<Note>())).Throws<DbUpdateConcurrencyException>();
+            repo.Setup(r => r.GetAll(user.FindFirstValue(ClaimTypes.NameIdentifier)))
+                .Returns(GetTestNotes(user.FindFirstValue(ClaimTypes.NameIdentifier)));
+            Note note = new Note
+            {
+                Id = 10,
+                UserId = "test",
+                Date = DateTime.Now,
+                Title = "Title",
+                Body = "Body"
+            };
+            var controller = new NotesController(repo.Object, manager.Object);
+            controller.ControllerContext = new ControllerContext();
+            controller.ControllerContext.HttpContext = new DefaultHttpContext { User = user };
+
+            //Act
+            var result = controller.Edit(id, note);
+
+            //Assert
+            repo.Verify(x => x.Update(It.IsAny<Note>()), Times.Once);
+            Assert.IsType<NotFoundResult>(result);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        public void Edit_Post_ValidModelStateExceptionExistentNote_ThrowsException(int id)
+        {
+            //Arrange
+            var repo = new Mock<INoteRepository>();
+            var store = new Mock<IUserStore<IdentityUser>>();
+            var manager = new Mock<UserManager<IdentityUser>>(store.Object, null, null, null, null, null, null, null, null);
+            var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
+                new Claim(ClaimTypes.NameIdentifier, "test"),
+                new Claim(ClaimTypes.Name, "test@mail.com")
+            }, "TestAuthentication"));
+            Note n = null;
+            repo.Setup(r => r.Update(It.IsAny<Note>())).Throws<DbUpdateConcurrencyException>();
+            repo.Setup(r => r.GetAll(user.FindFirstValue(ClaimTypes.NameIdentifier)))
+                .Returns(GetTestNotes(user.FindFirstValue(ClaimTypes.NameIdentifier)));
+            Note note = new Note
+            {
+                Id = 0,
+                UserId = "test",
+                Date = DateTime.Now,
+                Title = "Title",
+                Body = "Body"
+            };
+            var controller = new NotesController(repo.Object, manager.Object);
+            controller.ControllerContext = new ControllerContext();
+            controller.ControllerContext.HttpContext = new DefaultHttpContext { User = user };
+
+            //Act
+            Action result = () => controller.Edit(id, note);
+
+            //Assert
+            DbUpdateConcurrencyException exception = Assert.Throws<DbUpdateConcurrencyException>(result);
         }
 
         private List<Note> GetTestNotes(string userId)
