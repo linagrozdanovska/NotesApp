@@ -60,7 +60,7 @@ namespace NotesApp.Controllers
         // GET: Notes/Create
         public IActionResult Create()
         {
-            return View();
+            return View("Create");
         }
 
         // POST: Notes/Create

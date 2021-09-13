@@ -16,7 +16,7 @@ using Xunit;
 
 namespace NotesApp.Tests
 {
-    public class UnitTests
+    public class ControllerUnitTests
     {
         //private readonly Mock<INoteRepository> _mockRepo;
 
@@ -137,7 +137,7 @@ namespace NotesApp.Tests
             var result = controller.Details(id);
 
             //Assert
-            var viewResult = Assert.IsType<NotFoundResult>(result);
+            Assert.IsType<NotFoundResult>(result);
         }
 
         [Theory]
@@ -162,7 +162,7 @@ namespace NotesApp.Tests
             var result = controller.Details(id);
 
             //Assert
-            var viewResult = Assert.IsType<NotFoundResult>(result);
+            Assert.IsType<NotFoundResult>(result);
         }
 
         [Theory]
@@ -192,7 +192,87 @@ namespace NotesApp.Tests
             Assert.Equal(id, note.Id);
         }
 
+        [Fact]
+        public void Create_Get_ReturnsCreateView()
+        {
+            //Arrange
+            var repo = new Mock<INoteRepository>();
+            var store = new Mock<IUserStore<IdentityUser>>();
+            var manager = new Mock<UserManager<IdentityUser>>(store.Object, null, null, null, null, null, null, null, null);
+            var controller = new NotesController(repo.Object, manager.Object);
 
+            //Act
+            var result = controller.Create() as ViewResult;
+
+            //Assert
+            Assert.Equal("Create", result.ViewName);
+        }
+
+        [Fact]
+        public void Create_PostInvalidData_ReturnsCreateView()
+        {
+            //Arrange
+            var repo = new Mock<INoteRepository>();
+            var store = new Mock<IUserStore<IdentityUser>>();
+            var manager = new Mock<UserManager<IdentityUser>>(store.Object, null, null, null, null, null, null, null, null);
+            var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
+                new Claim(ClaimTypes.NameIdentifier, "test"),
+                new Claim(ClaimTypes.Name, "test@mail.com")
+            }, "TestAuthentication"));
+            Note n = null;
+            repo.Setup(r => r.Insert(It.IsAny<Note>()))
+                .Callback<Note>(x => n = x);
+            Note note = new Note
+            {
+                Title = "Title"
+            };
+            var controller = new NotesController(repo.Object, manager.Object);
+            controller.ControllerContext = new ControllerContext();
+            controller.ControllerContext.HttpContext = new DefaultHttpContext { User = user };
+            controller.ModelState.AddModelError("Body", "The Body field is required.");
+
+            //Act
+            var result = controller.Create(note) as ViewResult;
+
+            //Assert
+            repo.Verify(x => x.Insert(It.IsAny<Note>()), Times.Never);
+            Assert.Equal("Create", result.ViewName);
+            Assert.IsType<Note>(result.Model);
+        }
+
+        [Fact]
+        public void Create_PostValidData_RedirectsToIndexAction()
+        {
+            //Arrange
+            var repo = new Mock<INoteRepository>();
+            var store = new Mock<IUserStore<IdentityUser>>();
+            var manager = new Mock<UserManager<IdentityUser>>(store.Object, null, null, null, null, null, null, null, null);
+            var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
+                new Claim(ClaimTypes.NameIdentifier, "test"),
+                new Claim(ClaimTypes.Name, "test@mail.com")
+            }, "TestAuthentication"));
+            Note n = null;
+            repo.Setup(r => r.Insert(It.IsAny<Note>()))
+                .Callback<Note>(x => n = x);
+            Note note = new Note
+            {
+                Title = "Title",
+                Body = "Body"
+            };
+            var controller = new NotesController(repo.Object, manager.Object);
+            controller.ControllerContext = new ControllerContext();
+            controller.ControllerContext.HttpContext = new DefaultHttpContext { User = user };
+
+            //Act
+            RedirectToActionResult result = (RedirectToActionResult)controller.Create(note);
+
+            //Assert
+            repo.Verify(x => x.Insert(It.IsAny<Note>()), Times.Once);
+            Assert.Equal(n.Title, note.Title);
+            Assert.Equal(n.Body, note.Body);
+            Assert.Equal(n.UserId, user.FindFirstValue(ClaimTypes.NameIdentifier));
+            Assert.Equal("Index", result.ActionName);
+        }
 
         private List<Note> GetTestNotes(string userId)
         {
