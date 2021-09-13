@@ -40,12 +40,12 @@ namespace NotesApp.Controllers
         // GET: Notes/Details/5
         public IActionResult Details(int? id)
         {
-            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            
             if (id == null)
             {
                 return NotFound();
             }
+
+            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             var note = _noteRepository.Get(id, userId);
 
@@ -71,6 +71,7 @@ namespace NotesApp.Controllers
         public IActionResult Create([Bind("Id,UserId,Title,Body,Date")] Note note)
         {
             string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             if (ModelState.IsValid)
             {
                 note.UserId = userId;
@@ -108,6 +109,7 @@ namespace NotesApp.Controllers
         public IActionResult Edit(int id, [Bind("Id,UserId,Title,Body,Date")] Note note)
         {
             string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             if (!id.Equals(note.Id))
             {
                 return NotFound();

@@ -125,13 +125,7 @@ namespace NotesApp.Tests
             var repo = new Mock<INoteRepository>();
             var store = new Mock<IUserStore<IdentityUser>>();
             var manager = new Mock<UserManager<IdentityUser>>(store.Object, null, null, null, null, null, null, null, null);
-            var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
-                new Claim(ClaimTypes.NameIdentifier, "test"),
-                new Claim(ClaimTypes.Name, "test@mail.com")
-            }, "TestAuthentication"));
             var controller = new NotesController(repo.Object, manager.Object);
-            controller.ControllerContext = new ControllerContext();
-            controller.ControllerContext.HttpContext = new DefaultHttpContext { User = user };
 
             //Act
             var result = controller.Details(id);
@@ -209,7 +203,7 @@ namespace NotesApp.Tests
         }
 
         [Fact]
-        public void Create_PostInvalidData_ReturnsCreateView()
+        public void Create_Post_InvalidData_ReturnsCreateView()
         {
             //Arrange
             var repo = new Mock<INoteRepository>();
@@ -241,7 +235,7 @@ namespace NotesApp.Tests
         }
 
         [Fact]
-        public void Create_PostValidData_RedirectsToIndexAction()
+        public void Create_Post_ValidData_RedirectsToIndexAction()
         {
             //Arrange
             var repo = new Mock<INoteRepository>();
@@ -272,6 +266,82 @@ namespace NotesApp.Tests
             Assert.Equal(n.Body, note.Body);
             Assert.Equal(n.UserId, user.FindFirstValue(ClaimTypes.NameIdentifier));
             Assert.Equal("Index", result.ActionName);
+        }
+
+        [Theory]
+        [InlineData(null)]
+        public void Edit_Get_NullId_ReturnsNotFound(int? id)
+        {
+            //Arrange
+            var repo = new Mock<INoteRepository>();
+            var store = new Mock<IUserStore<IdentityUser>>();
+            var manager = new Mock<UserManager<IdentityUser>>(store.Object, null, null, null, null, null, null, null, null);
+            var controller = new NotesController(repo.Object, manager.Object);
+
+            //Act
+            var result = controller.Edit(id);
+
+            //Assert
+            Assert.IsType<NotFoundResult>(result);
+        }
+
+        [Theory]
+        [InlineData(5)]
+        public void Edit_Get_NonexistentId_ReturnsNotFound(int? id)
+        {
+            //Arrange
+            var repo = new Mock<INoteRepository>();
+            var store = new Mock<IUserStore<IdentityUser>>();
+            var manager = new Mock<UserManager<IdentityUser>>(store.Object, null, null, null, null, null, null, null, null);
+            var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
+                new Claim(ClaimTypes.NameIdentifier, "test"),
+                new Claim(ClaimTypes.Name, "test@mail.com")
+            }, "TestAuthentication"));
+            repo.Setup(r => r.Get(id, user.FindFirstValue(ClaimTypes.NameIdentifier)))
+                .Returns(GetTestNotes(user.FindFirstValue(ClaimTypes.NameIdentifier)).SingleOrDefault(z => z.Id.Equals(id)));
+            var controller = new NotesController(repo.Object, manager.Object);
+            controller.ControllerContext = new ControllerContext();
+            controller.ControllerContext.HttpContext = new DefaultHttpContext { User = user };
+
+            //Act
+            var result = controller.Edit(id);
+
+            //Assert
+            Assert.IsType<NotFoundResult>(result);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        public void Edit_Get_ExistentId_ReturnsDetailsView(int? id)
+        {
+            //Arrange
+            var repo = new Mock<INoteRepository>();
+            var store = new Mock<IUserStore<IdentityUser>>();
+            var manager = new Mock<UserManager<IdentityUser>>(store.Object, null, null, null, null, null, null, null, null);
+            var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
+                new Claim(ClaimTypes.NameIdentifier, "test"),
+                new Claim(ClaimTypes.Name, "test@mail.com")
+            }, "TestAuthentication"));
+            repo.Setup(r => r.Get(id, user.FindFirstValue(ClaimTypes.NameIdentifier)))
+                .Returns(GetTestNotes(user.FindFirstValue(ClaimTypes.NameIdentifier)).SingleOrDefault(z => z.Id.Equals(id)));
+            var controller = new NotesController(repo.Object, manager.Object);
+            controller.ControllerContext = new ControllerContext();
+            controller.ControllerContext.HttpContext = new DefaultHttpContext { User = user };
+
+            //Act
+            var result = controller.Edit(id) as ViewResult;
+
+            //Assert
+            Assert.Equal("Edit", result.ViewName);
+            var note = Assert.IsType<Note>(result.Model);
+            Assert.Equal(id, note.Id);
+        }
+
+        [Theory]
+        [InlineData(2)]
+        public void Edit_Post_DifferentIdValues_ReturnsNotFound(int id)
+        {
+
         }
 
         private List<Note> GetTestNotes(string userId)
