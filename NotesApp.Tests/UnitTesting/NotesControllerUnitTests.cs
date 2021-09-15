@@ -17,7 +17,7 @@ using Xunit;
 
 namespace NotesApp.Tests
 {
-    public class ControllerUnitTests
+    public class NotesControllerUnitTests
     {
         //private readonly Mock<INoteRepository> _mockRepo;
 
