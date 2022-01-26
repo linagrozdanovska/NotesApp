@@ -72,12 +72,66 @@ namespace NotesApp.Tests.E2ETesting
             Assert.DoesNotContain("Note #3", _indexPage.Source);
         }
 
+        [Fact]
+        public void Create_ValidInput_CreatesNewNote()
+        {
+            Login();
+            _indexPage.Navigate();
+            _indexPage.ClickNewNote();
+            Assert.Equal("Create - NotesApp", _driver.Title);
+
+            CreatePage createPage = new CreatePage(_driver);
+            var title = GenerateRandomString(10);
+            var body = GenerateRandomString(40);
+            createPage.PopulateTitle(title);
+            createPage.PopulateBody(body);
+            createPage.ClickCreate();
+
+            Assert.Equal("My Notes - NotesApp", _driver.Title);
+            Assert.Contains(title, _driver.PageSource);
+            Assert.Contains(body, _driver.PageSource);
+        }
+
+        [Fact]
+        public void Create_EmptyInput_ShowsErrors()
+        {
+            Login();
+            _indexPage.Navigate();
+            _indexPage.ClickNewNote();
+            Assert.Equal("Create - NotesApp", _driver.Title);
+
+            CreatePage createPage = new CreatePage(_driver);
+            var title = "";
+            var body = "";
+            createPage.PopulateTitle(title);
+            createPage.PopulateBody(body);
+            createPage.ClickCreate();
+
+            Assert.Equal("Create - NotesApp", _driver.Title);
+            Assert.Equal("The Title field is required.", createPage.TitleErrorMessage);
+            Assert.Equal("The Body field is required.", createPage.BodyErrorMessage);
+        }
+
         private void Login()
         {
             _loginPage.Navigate();
             _loginPage.PopulateEmail("linagrozdanovska99@gmail.com");
             _loginPage.PopulatePassword("Test123!");
             _loginPage.ClickLogIn();
+        }
+
+        private string GenerateRandomString(int length)
+        {
+            var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            var stringChars = new char[length];
+            var random = new Random();
+
+            for (int i = 0; i < stringChars.Length; i++)
+            {
+                stringChars[i] = chars[random.Next(chars.Length)];
+            }
+
+            return new String(stringChars);
         }
     }
 }

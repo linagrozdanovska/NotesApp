@@ -18,6 +18,7 @@ namespace NotesApp.Tests.E2ETesting
         private IWebElement SearchElement => _driver.FindElement(By.Id("search"));
         private IWebElement SearchButtonElement => _driver.FindElement(By.Id("search-btn"));
         private IWebElement SearchCancelElement => _driver.FindElement(By.Id("cancel"));
+        private IWebElement NewNoteElement => _driver.FindElement(By.Id("new-note"));
 
         public string Title => _driver.Title;
         public string Source => _driver.PageSource;
@@ -40,11 +41,21 @@ namespace NotesApp.Tests.E2ETesting
             Thread.Sleep(2000);
         }
 
+        public void ClickNewNote()
+        {
+            NewNoteElement.Click();
+            Thread.Sleep(1000);
+        }
+
         public string GetSearchString()
         {
             return SearchElement.GetAttribute("value");
         }
 
-        public void Navigate() => _driver.Navigate().GoToUrl(URI);
+        public void Navigate()
+        {
+            _driver.Navigate().GoToUrl(URI);
+            Thread.Sleep(1000);
+        }
     }
 }
