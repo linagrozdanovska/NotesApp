@@ -2,7 +2,7 @@
 {
     public static class UserSettings
     {
-        public const string UserId = "0d9a82e9-426d-4327-b216-cae9c32e5ee4";
+        public const string UserId = "408d727b-9758-485c-a36c-27319d3208da";
         public const string Name = "linagrozdanovska99@gmail.com";
         public const string UserEmail = "linagrozdanovska99@gmail.com";
     }

@@ -65,7 +65,7 @@ namespace NotesApp.Tests
         [InlineData("/Notes/Create")]
         [InlineData("/Notes/Edit/3")]
         [InlineData("/Notes/Delete/3")]
-        public async Task AuthorizedMethod_AuthenticatedUser_IsAvailable(string url)
+        public async Task AuthorizedMethod_AuthenticatedUser_ReturnStatusCodeOKAndCorrectContentType(string url)
         {
             // Arrange
             var client = GetFactory(hasUser: true).CreateClient();
