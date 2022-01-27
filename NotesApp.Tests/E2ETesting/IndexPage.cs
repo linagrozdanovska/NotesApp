@@ -1,4 +1,5 @@
 ﻿using OpenQA.Selenium;
+using SeleniumExtras.PageObjects;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -56,6 +57,15 @@ namespace NotesApp.Tests.E2ETesting
         {
             _driver.Navigate().GoToUrl(URI);
             Thread.Sleep(1000);
+        }
+
+        public void ClickNoteLink(string title)
+        {
+            _driver.FindElement(new ByChained(
+                    By.CssSelector("#link > h4"),
+                    By.XPath("//*[contains(text(), '" + title + "')]")
+                )).Click();
+            Thread.Sleep(2000);
         }
     }
 }
