@@ -17,8 +17,8 @@ namespace NotesApp.Tests.E2ETesting
         private readonly IWebDriver _driver;
         private readonly LoginPage _loginPage;
         private readonly IndexPage _indexPage;
-        private static string _title;
-        private static string _body;
+        private static string _title = "";
+        private static string _body = "";
 
         public EndToEndTests()
         {
@@ -164,6 +164,49 @@ namespace NotesApp.Tests.E2ETesting
             Assert.Equal("Edit - NotesApp", _driver.Title);
             Assert.Equal("The Title field is required.", editPage.TitleErrorMessage);
             Assert.Equal("The Body field is required.", editPage.BodyErrorMessage);
+        }
+
+        [Fact, Priority(8)]
+        public void Delete_ClickNo_ReturnsToIndex()
+        {
+            Login();
+            _indexPage.Navigate();
+            _indexPage.ClickNoteLink(_title);
+            Assert.Equal("Details - NotesApp", _driver.Title);
+
+            DetailsPage detailsPage = new DetailsPage(_driver);
+            detailsPage.ClickDelete();
+            Assert.Equal("Delete - NotesApp", _driver.Title);
+
+            DeletePage deletePage = new DeletePage(_driver);
+            deletePage.ClickNo();
+
+            Assert.Equal("My Notes - NotesApp", _driver.Title);
+            Assert.Contains(_title, _driver.PageSource);
+            Assert.Contains(_body, _driver.PageSource);
+        }
+
+        [Fact, Priority(9)]
+        public void Delete_ClickYes_DeletesNoteAndReturnsToIndex()
+        {
+            Login();
+            _indexPage.Navigate();
+            _indexPage.ClickNoteLink(_title);
+            Assert.Equal("Details - NotesApp", _driver.Title);
+
+            DetailsPage detailsPage = new DetailsPage(_driver);
+            detailsPage.ClickDelete();
+            Assert.Equal("Delete - NotesApp", _driver.Title);
+
+            DeletePage deletePage = new DeletePage(_driver);
+            deletePage.ClickYes();
+
+            Assert.Equal("My Notes - NotesApp", _driver.Title);
+            Assert.DoesNotContain(_title, _driver.PageSource);
+            Assert.DoesNotContain(_body, _driver.PageSource);
+
+            _title = "";
+            _body = "";
         }
 
         private void Login()
