@@ -12,7 +12,7 @@ using System.Linq;
 using System.Security.Claims;
 using Xunit;
 
-namespace NotesApp.Tests
+namespace NotesApp.Tests.UnitTesting
 {
     public class NotesControllerUnitTests
     {
