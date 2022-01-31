@@ -16,8 +16,6 @@ namespace NotesApp.Tests
 {
     public class NotesControllerUnitTests
     {
-        //private readonly Mock<INoteRepository> _mockRepo;
-
         [Fact]
         public void Home_AuthenticatedUser_RedirectsToIndex()
         {

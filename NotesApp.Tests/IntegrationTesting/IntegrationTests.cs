@@ -1,11 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc.Testing;
-using NotesApp.Tests.IntegrationTesting;
 using System.Net;
 using System.Threading.Tasks;
 using Xunit;
 
 
-namespace NotesApp.Tests
+namespace NotesApp.Tests.IntegrationTesting
 {
     public class IntegrationTests : IntegrationTestBase
     {
